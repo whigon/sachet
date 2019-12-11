@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/messagebird/sachet/provider/aliyun"
 	"log"
 	"net/http"
 	"os"
@@ -56,7 +57,8 @@ func main() {
 			errorHandler(w, http.StatusBadRequest, err, "?")
 			return
 		}
-
+		//fmt.Println("data: ", data.CommonLabels["key"])
+		//fmt.Println("data Receiver: ", data.Receiver)
 		receiverConf := receiverConfByReceiver(data.Receiver)
 		if receiverConf == nil {
 			errorHandler(w, http.StatusBadRequest, fmt.Errorf("Receiver missing: %s", data.Receiver), "?")
@@ -67,6 +69,8 @@ func main() {
 			errorHandler(w, http.StatusInternalServerError, err, receiverConf.Provider)
 			return
 		}
+		//fmt.Printf("data receiverConf: %s\n", receiverConf)
+		//fmt.Println("data provide: ", receiverConf.Provider, " ", provider)
 
 		var text string
 		if receiverConf.Text != "" {
@@ -111,7 +115,7 @@ func main() {
 			Type: receiverConf.Type,
 			Text: text,
 		}
-
+		//fmt.Println("message", message.Type)
 		if err = provider.Send(message); err != nil {
 			errorHandler(w, http.StatusBadRequest, err, receiverConf.Provider)
 			return
@@ -160,6 +164,7 @@ func receiverConfByReceiver(name string) *ReceiverConf {
 }
 
 func providerByName(name string) (sachet.Provider, error) {
+	fmt.Println(name)
 	switch name {
 	case "messagebird":
 		return messagebird.NewMessageBird(config.Providers.MessageBird), nil
@@ -193,6 +198,8 @@ func providerByName(name string) (sachet.Provider, error) {
 		return pushbullet.NewPushbullet(config.Providers.Pushbullet), nil
 	case "nowsms":
 		return nowsms.NewNowSms(config.Providers.NowSms), nil
+	case "aliyun":
+		return aliyun.NewAliyun(config.Providers.Aliyun)
 	}
 
 	return nil, fmt.Errorf("%s: Unknown provider", name)
